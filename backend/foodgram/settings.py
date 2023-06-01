@@ -1,35 +1,55 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 load_dotenv()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DB_ENGINE',
+                            default="django.db.backends.postgresql"),
+        'NAME': os.getenv('DB_NAME', default="postgres"),
+        'USER': os.getenv('POSTGRES_USER', default="postgres"),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default="postgres"),
+        'HOST': os.getenv('DB_HOST', default="localhost"),
+        'PORT': os.getenv('DB_PORT', default="5432")
+    }
+}
 
-SECRET_KEY = os.getenv('TOKEN', 'default-value')
+
+PAGE_SIZE = 6
+
+
+SECRET_KEY = os.getenv('SECRET_KEY',
+                       default='p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs')
 
 DEBUG = True
 
-ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS', default='*')]
+ALLOWED_HOSTS = ['127.0.0.1',
+                 'localhost',
+                 '0.0.0.0',
+                 '*'
+                 ]
 
 AUTH_USER_MODEL = 'users.User'
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
+    'django.contrib.auth',
+    'django.contrib.admin',
+    'django.contrib.contenttypes',
+    'django.contrib.messages',
+    'django.contrib.sessions',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'djoser',
     'users.apps.UsersConfig',
-    'recipes.apps.RecipesConfig',
     'api.apps.ApiConfig',
-    "rest_framework",
-    "rest_framework.authtoken",
-    "django_filters",
-    "djoser",
-    "drf_yasg",
-    "colorfield",
+    'recipes.apps.RecipesConfig',
 ]
 
 MIDDLEWARE = [
@@ -62,19 +82,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
-
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', default='postgres'),
-        'USER': os.getenv('POSTGRES_USER', default='postgres'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
-        'HOST': os.getenv('DB_HOST', default='localhost'),
-        'PORT': os.getenv('DB_PORT', default='5432')
-    }
-}
-
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -90,33 +97,35 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
-    ],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-    ],
-}
-
 DJOSER = {
-    "SERIALIZERS": {
-        "user_create": "api.serializers.UserCreateSerializer",
-        "user": "api.serializers.UserSerializer",
-        "current_user": "api.serializers.UserSerializer",
-    },
+    'HIDE_USERS': False,
+    'PERMISSIONS': {
+        'user_list': ['rest_framework.permissions.AllowAny', ],
+        'user': ['rest_framework.permissions.IsAuthenticated', ],
 
-    "PERMISSIONS": {
-        "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
-        "user_list": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"],
     },
-
-    "HIDE_USERS": False,
+    'SERIALIZERS': {
+        'user_create': 'users.serializers.CreateUserSerializer',
+        'user': 'users.serializers.UserListSerializer',
+        'current_user': 'users.serializers.UserListSerializer',
+    },
 }
 
-LANGUAGE_CODE = 'ru-RU'
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication'
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ],
+}
 
-TIME_ZONE = 'Europe/Moscow'
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -125,13 +134,11 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-LENGTH_OF_FIELDS_USER_1 = 150
-
-LENGTH_OF_FIELDS_USER_2 = 254
-
-LENGTH_OF_FIELDS_RECIPES = 200
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

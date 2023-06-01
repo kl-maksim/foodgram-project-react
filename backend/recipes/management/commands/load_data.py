@@ -1,25 +1,20 @@
-import json
+import csv
 
 from django.core.management.base import BaseCommand
 
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient
 
 
 class Command(BaseCommand):
-    help = ' Загрузить данные в модель ингредиентов '
+    help = '''Импорт данных из csv-файла в базу данных.'''
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.WARNING('Старт команды'))
-        with open('data/ingredients.json', encoding='utf-8',
-                  ) as data_file_ingredients:
-            ingredient_data = json.loads(data_file_ingredients.read())
-            for ingredients in ingredient_data:
-                Ingredient.objects.get_or_create(**ingredients)
-
-        with open('data/tags.json', encoding='utf-8',
-                  ) as data_file_tags:
-            tags_data = json.loads(data_file_tags.read())
-            for tags in tags_data:
-                Tag.objects.get_or_create(**tags)
-
-        self.stdout.write(self.style.SUCCESS('Данные загружены'))
+        with open('ingredients.csv', encoding='utf-8') as file:
+            file_reader = csv.reader(file)
+            for row in file_reader:
+                name, measurement_unit = row
+                Ingredient.objects.get_or_create(
+                    name=name,
+                    measurement_unit=measurement_unit
+                )
+        self.stdout.write('Ингредиенты успешно загружены!')
