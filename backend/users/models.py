@@ -33,7 +33,7 @@ class User(AbstractUser):
         return self.username
 
 
-class Subscription(models.Model):
+class Follow(models.Model):
     user = models.ForeignKey(User,
                              related_name='follower',
                              verbose_name='Подписчик',

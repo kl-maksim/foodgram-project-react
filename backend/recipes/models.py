@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth import get_user_model
+from foodgram import settings
 
 User = get_user_model()
 
@@ -49,16 +50,18 @@ class Recipe(models.Model):
     text = models.TextField('Описание рецепта',)
     image = models.ImageField('Изображение',)
     tags = models.ManyToManyField(Tag,
+                                  related_name='recipes',
                                   verbose_name='Теги',)
     ingredients = models.ManyToManyField(Ingredient,
+                                         related_name='recipes',
                                          verbose_name='Ингредиенты',
-                                         through='IngredientAmount',)
+                                         through='Recipeingredients',)
     pub_date = models.DateTimeField('Дата публикации',
                                     auto_now_add=True,
                                     db_index=True,)
     cooking_time = models.PositiveIntegerField(
         verbose_name='Время приготовления рецепта, указанное в минутах',
-        validators=[MinValueValidator(1)],)
+        validators=[MinValueValidator(settings.VALID_COUNT)],)
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -72,18 +75,18 @@ class Recipe(models.Model):
         return f'Рецепт {self.name}'
 
 
-class IngredientAmount(models.Model):
+class Recipeingredients(models.Model):
     ingredient = models.ForeignKey(Ingredient,
-                                   related_name='amount',
+                                   related_name='recipeingredients',
                                    verbose_name='Ингридиент',
                                    on_delete=models.CASCADE,)
     recipe = models.ForeignKey(Recipe,
-                               related_name='amount',
+                               related_name='recipeingredients',
                                verbose_name='Рецепт',
                                on_delete=models.CASCADE,)
     amount = models.PositiveSmallIntegerField(
-        verbose_name='Количество спользуемого ингредиента',
-        validators=[MinValueValidator(1)])
+        verbose_name='Количество используемого ингредиента',
+        validators=[MinValueValidator(settings.VALID_COUNT)])
 
     class Meta:
         ordering = ('-id', )
@@ -92,6 +95,9 @@ class IngredientAmount(models.Model):
             models.UniqueConstraint(
                 name='recipes_ingredients',
                 fields=['ingredient', 'recipe', ],)]
+
+    def __str__(self):
+        return f'{self.recipe}'
 
 
 class Favorite(models.Model):
@@ -128,6 +134,7 @@ class ShoppingCart(models.Model):
 
     class Meta:
         verbose_name = 'Добавление рецепта в список покупок'
+        ordering = ('pk',)
         constraints = [
             models.UniqueConstraint(
                 name='shopping_user_recipe',

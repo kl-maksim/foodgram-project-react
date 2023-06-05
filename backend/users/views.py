@@ -1,12 +1,13 @@
-from rest_framework import permissions, status
-from rest_framework.response import Response
-from rest_framework.generics import get_object_or_404
-from rest_framework.decorators import action
-from djoser.views import UserViewSet
 from django.contrib.auth import get_user_model
-from api.serializers import SubscriptionSerializer
+from djoser.views import UserViewSet
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+
+from .models import Follow
 from api.pagination import CustomPagination
-from .models import Subscription
+from api.serializers import SubscriptionSerializer
 
 User = get_user_model()
 
@@ -19,7 +20,7 @@ class UserViewSet(UserViewSet):
             detail=False,)
     def subscriptions(self, request):
         queryset = self.paginate_queryset(
-            Subscription.objects.filter(user=request.user))
+            self.request.user.follower.all())
         serializer = SubscriptionSerializer(queryset,
                                             many=True,
                                             context={'request': request}).data
@@ -32,7 +33,7 @@ class UserViewSet(UserViewSet):
     def subscribe(self, request, id=None):
         user = request.user
         author = get_object_or_404(User, id=id)
-        sub = Subscription.objects.filter(user=user, author=author,)
+        sub = Follow.objects.filter(user=user, author=author,)
         if self.request.method == 'POST':
             if user == author:
                 return Response({'Вы не можете подписаться на самого себя'},
@@ -41,11 +42,11 @@ class UserViewSet(UserViewSet):
                 return Response({'Вы уже подписаны'},
                                 status=status.HTTP_400_BAD_REQUEST,)
             serializer = SubscriptionSerializer(
-                Subscription.objects.create(user=user, author=author,),
+                Follow.objects.create(user=user, author=author,),
                 context={'request': request}).data
             return Response(serializer, status=status.HTTP_201_CREATED,)
         if sub.exists():
-            obj = get_object_or_404(Subscription, user=user,
+            obj = get_object_or_404(Follow, user=user,
                                     author=author,)
             obj.delete()
             return Response({'Вы отписались от рассылки'},

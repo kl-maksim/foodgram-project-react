@@ -6,8 +6,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from recipes.models import (Ingredient, Favorite, Recipe, ShoppingCart,
-                            IngredientAmount, Tag,)
+                            Recipeingredients, Tag,)
 from .filters import RecipeFilter, IngredientFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrReadOnly
@@ -99,7 +100,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             f'Список покупок для: {user.username}\n\n'
             f'Дата: {now:%Y-%m-%d}\n\n'
         ]
-        ingredients = IngredientAmount.objects.filter(
+        ingredients = Recipeingredients.objects.filter(
             recipe__cart__user=user).values('ingredient__name',
                                             'ingredient__measurement_unit'
                                             ).annotate(

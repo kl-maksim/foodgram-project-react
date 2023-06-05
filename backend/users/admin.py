@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Subscription
+from .models import User, Follow
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
@@ -17,5 +17,5 @@ class UserAdmin(admin.ModelAdmin):
     empty_value_display = 'empty'
 
 
-admin.site.register(Subscription, SubscriptionAdmin)
+admin.site.register(Follow, SubscriptionAdmin)
 admin.site.register(User, UserAdmin)

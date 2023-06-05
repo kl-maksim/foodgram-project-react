@@ -14,13 +14,17 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', default="postgres"),
         'USER': os.getenv('POSTGRES_USER', default="postgres"),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', default="postgres"),
-        'HOST': os.getenv('DB_HOST', default="127.0.0.1"),
+        'HOST': os.getenv('DB_HOST', default="localhost"),
         'PORT': os.getenv('DB_PORT', default="5432")
     }
 }
 
-
+VALID_COUNT = 1
 PAGE_SIZE = 6
+MIN_AMOUNT_VALUE = 1
+MAX_AMOUNT_VALUE = 32000
+MIN_COOCKING_TIME = 1
+MAX_COOCKING_TIME = 32000
 
 
 SECRET_KEY = os.getenv('SECRET_KEY',
@@ -117,6 +121,8 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend'
     ],
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
+    'PAGE_SIZE': 6,
 }
 
 LANGUAGE_CODE = 'en-us'
