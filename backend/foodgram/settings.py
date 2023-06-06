@@ -9,15 +9,23 @@ load_dotenv()
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+""" DATABASES = {
+    'default': {
         'ENGINE': os.getenv('DB_ENGINE',
                             default="django.db.backends.postgresql"),
         'NAME': os.getenv('DB_NAME', default="postgres"),
         'USER': os.getenv('POSTGRES_USER', default="postgres"),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', default="postgres"),
-        'HOST': os.getenv('DB_HOST', default="localhost"),
-        'PORT': os.getenv('DB_PORT', default="5432")
+        'HOST': os.getenv('DB_HOST', default="127.0.0.1"),
+        'PORT': os.getenv('DB_PORT', default="5422")
     }
-}
+} """
+
 
 VALID_COUNT = 1
 PAGE_SIZE = 6
@@ -30,7 +38,7 @@ MAX_COOCKING_TIME = 32000
 SECRET_KEY = os.getenv('SECRET_KEY',
                        default='p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs')
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -105,9 +113,8 @@ DJOSER = {
 
     },
     'SERIALIZERS': {
-        'user_create': 'users.serializers.CreateUserSerializer',
-        'user': 'users.serializers.UserListSerializer',
-        'current_user': 'users.serializers.UserListSerializer',
+        "user": "api.serializers.UserSerializer",
+        "current_user": "api.serializers.UserSerializer",
     },
 }
 

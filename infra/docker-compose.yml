@@ -2,13 +2,24 @@ version: '3.8'
 
 services:
   db:
-   image: postgres
-   ports:
-     - "5432:5432"
+   image: postgres:13.0-alpine
    volumes:
-     - "./database:/var/lib/postgresql/data"
+     - db_value:/var/lib/postgresql/data/
    env_file:
      - .env
+  
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
+    depends_on:
+      - db
+    env_file:
+      - ./.env
 
   frontend:
     build:
@@ -16,6 +27,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+  
   nginx:
     image: nginx:1.19.3
     ports:
@@ -24,3 +36,12 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+      - static_value:/var/html/static/
+      - media_value:/var/html/madia/
+    depends_on:
+      - backend
+
+volumes: 
+  static_value:
+  media_value:
+  db_value:    

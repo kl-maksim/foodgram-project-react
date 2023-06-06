@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from recipes.models import (Ingredient, Favorite, Recipe, ShoppingCart,
                             Recipeingredients, Tag,)
-from .filters import RecipeFilter, IngredientFilter
+from .filters import RecipeFilter, NameSearchFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrReadOnly
 from .mixins import ViewSetMixin
@@ -22,7 +22,8 @@ class IngredientViewSet(ViewSetMixin):
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
     permission_classes = (permissions.AllowAny,)
-    filterset_class = IngredientFilter
+    filter_backends = (NameSearchFilter,)
+    search_fields = ('^name',)
 
 
 class TagViewSet(ViewSetMixin):

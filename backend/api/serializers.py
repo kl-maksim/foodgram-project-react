@@ -1,14 +1,31 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.response import Response
+from rest_framework.generics import get_object_or_404
 
 from users.models import Follow
-from users.serializers import UserListSerializer
 from recipes.models import Ingredient, Recipe, Tag, Recipeingredients
 from foodgram import settings
 
 User = get_user_model()
+
+
+class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'username', 'last_name', 'email',
+                  'is_subscribed', 'id',)
+
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            # return self.author.obj.follower.all().exists()
+            return Follow.objects.filter(user=user, author=obj).exists()
+        return False
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -23,7 +40,7 @@ class TagSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
+class IngredientAmountSerializer(serializers.ModelSerializer):
     recipe = serializers.PrimaryKeyRelatedField(read_only=True)
     amount = serializers.IntegerField(min_value=settings.MIN_AMOUNT_VALUE,
                                       max_value=settings.MAX_AMOUNT_VALUE,
@@ -40,8 +57,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(),
                                               many=True)
-    ingredients = RecipeIngredientSerializer(many=True)
-    author = UserListSerializer(read_only=True)
+    ingredients = IngredientAmountSerializer(many=True)
+    author = UserSerializer(read_only=True)
     image = Base64ImageField(use_url=True)
     cooking_time = serializers.IntegerField(
         min_value=settings.MIN_COOCKING_TIME,
@@ -67,6 +84,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance.tags.set(tags_data)
         if 'ingredients' in self.validated_data:
             ingredients_data = validated_data.pop('ingredients')
+            # quantity = self.instance.id.recipeingredients.all()
             quantity = Recipeingredients.objects.filter(
                 recipe_id=instance.id)
             quantity.delete()
@@ -113,7 +131,7 @@ class GetIngredientSerializer(serializers.ModelSerializer):
 
 
 class GetRecipeSerializer(serializers.ModelSerializer):
-    author = UserListSerializer(read_only=True)
+    author = UserSerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
     ingredients = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
@@ -175,4 +193,32 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return RecipeSubscribeSerializer(queryset, many=True).data
 
     def get_is_subscribed(self, obj):
-        return Follow.objects.filter(author=obj.author, user=obj.user).exists()
+        return obj.author.following.filter(user=obj.user).exists()
+        # return Follow.objects.filter(author=obj.author, user=obj.user).exists()
+
+    def validate(self, request, id=None):
+        author = get_object_or_404(User, id=id)
+        user = request.user
+        sub = Follow.objects.filter(user=user, author=author,)
+        if self.request.method == 'POST':
+            if user == author:
+                return Response({'Вы не можете подписаться на самого себя'},
+                                status=status.HTTP_400_BAD_REQUEST,)
+            if sub.exists():
+                return Response({'Вы уже подписаны'},
+                                status=status.HTTP_400_BAD_REQUEST,)
+            serializer = SubscriptionSerializer(
+                Follow.objects.create(user=user, author=author,),
+                context={'request': request}).data
+            return Response(serializer, status=status.HTTP_201_CREATED,)
+        if sub.exists():
+            obj = get_object_or_404(Follow, user=user,
+                                    author=author,)
+            obj.delete()
+            return Response({'Вы отписались от рассылки'},
+                            status=status.HTTP_204_NO_CONTENT)
+        if user == author:
+            return Response({'Вы не можете отписаться от себя'},
+                            status=status.HTTP_204_NO_CONTENT)
+        return Response({'Вы не подписаны'},
+                        status=status.HTTP_400_BAD_REQUEST)

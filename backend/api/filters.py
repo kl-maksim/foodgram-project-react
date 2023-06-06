@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
 import django_filters
-# from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter
 
-from recipes.models import Tag, Recipe, Ingredient
+from recipes.models import Tag, Recipe
 
 User = get_user_model()
 
@@ -19,10 +19,14 @@ class RecipeFilter(django_filters.FilterSet):
         fields = ('author', 'tags',)
 
 
-class IngredientFilter(django_filters.FilterSet):
+""" class IngredientFilter(SearchFilter):
     name = django_filters.CharFilter(field_name='name',
                                      lookup_expr='istartswith',)
-
     class Meta:
         model = Ingredient
         fields = ('name',)
+    """
+
+
+class NameSearchFilter(SearchFilter):
+    search_param = 'name'
