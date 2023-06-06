@@ -38,7 +38,7 @@ MAX_COOCKING_TIME = 32000
 SECRET_KEY = os.getenv('SECRET_KEY',
                        default='p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs')
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -109,8 +109,9 @@ DJOSER = {
     'HIDE_USERS': False,
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny', ],
-        'user': ['rest_framework.permissions.IsAuthenticated', ],
-
+        'user': ['rest_framework.permissions.AllowAny', ],
+        'user_delete': ['rest_framework.permissions.IsAdminUser'],
+        'set_username': ['rest_framework.permissions.IsAdminUser'],
     },
     'SERIALIZERS': {
         "user": "api.serializers.UserSerializer",

@@ -24,12 +24,14 @@ class IngredientViewSet(ViewSetMixin):
     permission_classes = (permissions.AllowAny,)
     filter_backends = (NameSearchFilter,)
     search_fields = ('^name',)
+    pagination_class = None
 
 
 class TagViewSet(ViewSetMixin):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (permissions.AllowAny,)
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

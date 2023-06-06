@@ -65,7 +65,7 @@ class Recipe(models.Model):
 
     class Meta:
         verbose_name = 'Рецепт'
-        ordering = ('-id',)
+        ordering = ('pub_date',)
         constraints = [
             models.UniqueConstraint(
                 name='unique_author_name',
