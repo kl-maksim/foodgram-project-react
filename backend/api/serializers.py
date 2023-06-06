@@ -84,9 +84,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance.tags.set(tags_data)
         if 'ingredients' in self.validated_data:
             ingredients_data = validated_data.pop('ingredients')
-            # quantity = self.instance.id.recipeingredients.all()
-            quantity = Recipeingredients.objects.filter(
-                recipe_id=instance.id)
+            quantity = self.instance.id.recipeingredients.all()
+            # quantity = Recipeingredients.objects.filter(
+            #   recipe_id=instance.id)
             quantity.delete()
             self.create_update(ingredients_data, instance, Recipeingredients,)
         return super().update(instance, validated_data)
