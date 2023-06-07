@@ -1,15 +1,14 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
+from foodgram import settings
 from rest_framework import serializers, status
 from rest_framework.fields import SerializerMethodField
-from rest_framework.validators import UniqueTogetherValidator
-from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.validators import UniqueTogetherValidator
 
+from recipes.models import Ingredient, Recipe, Recipeingredients, Tag
 from users.models import Follow
-from recipes.models import Ingredient, Recipe, Tag, Recipeingredients
-from foodgram import settings
-
 
 User = get_user_model()
 
@@ -179,6 +178,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = (
             'first_name', 'username', 'last_name', 'email',
             'is_subscribed', 'recipes_count', 'recipes', 'id',)
+        read_only_fields = ("email", "username", "first_name", "last_name")
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()

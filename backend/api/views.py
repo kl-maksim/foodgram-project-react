@@ -3,19 +3,19 @@ from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets, permissions
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import (Ingredient, Favorite, Recipe, ShoppingCart,
-                            Recipeingredients, Tag,)
-from .filters import RecipeFilter, NameSearchFilter
+from .filters import NameSearchFilter, RecipeFilter
+from .mixins import ViewSetMixin
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrReadOnly
-from .mixins import ViewSetMixin
-from .serializers import (IngredientSerializer, TagSerializer,
-                          RecipeSerializer, GetRecipeSerializer,
-                          RecipeSubscribeSerializer,)
+from .serializers import (GetRecipeSerializer, IngredientSerializer,
+                          RecipeSerializer, RecipeSubscribeSerializer,
+                          TagSerializer)
+from recipes.models import (Favorite, Ingredient, Recipe, Recipeingredients,
+                            ShoppingCart, Tag)
 
 
 class IngredientViewSet(ViewSetMixin):
