@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers, status
+from rest_framework.fields import SerializerMethodField
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
@@ -9,23 +10,23 @@ from users.models import Follow
 from recipes.models import Ingredient, Recipe, Tag, Recipeingredients
 from foodgram import settings
 
+
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ('first_name', 'username', 'last_name', 'email',
-                  'is_subscribed', 'id',)
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', )
 
     def get_is_subscribed(self, obj):
-        user = self.context['request'].user
-        if user.is_authenticated:
-            # return self.author.obj.follower.all().exists()
-            return Follow.objects.filter(user=user, author=obj).exists()
-        return False
+        user = self.context.get("request").user
+        if user.is_anonymous:
+            return False
+        return Follow.objects.filter(user=user, author=obj).exists()
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -70,12 +71,17 @@ class RecipeSerializer(serializers.ModelSerializer):
             'id', 'name', 'text', 'author', 'ingredients', 'tags', 'image',
             'cooking_time',)
 
+    def create_update(self, datas, model, recipe):
+        create_data = (model(recipe=recipe, ingredient=data['ingredient'],
+                             amount=data['amount']) for data in datas)
+        model.objects.bulk_create(create_data)
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags_data)
-        self.create_update(recipe, ingredients_data, Recipeingredients,)
+        self.create_update(ingredients_data, Recipeingredients, recipe,)
         return recipe
 
     def update(self, instance, validated_data):
@@ -84,17 +90,11 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance.tags.set(tags_data)
         if 'ingredients' in self.validated_data:
             ingredients_data = validated_data.pop('ingredients')
-            quantity = self.instance.id.recipeingredients.all()
-            # quantity = Recipeingredients.objects.filter(
-            #   recipe_id=instance.id)
+            quantity = Recipeingredients.objects.filter(
+                recipe_id=instance.id)
             quantity.delete()
-            self.create_update(ingredients_data, instance, Recipeingredients,)
+            self.create_update(ingredients_data, Recipeingredients, instance,)
         return super().update(instance, validated_data)
-
-    def create_update(self, datas, model, recipe):
-        create_data = (model(recipe=recipe, amount=data['amount'],
-                             ingredient=data['ingredient'],) for data in datas)
-        model.objects.bulk_create(create_data)
 
     def to_representation(self, instance):
         self.fields.pop('tags')
@@ -169,32 +169,21 @@ class RecipeSubscribeSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
-    first_name = serializers.ReadOnlyField(source='author.first_name')
-    username = serializers.ReadOnlyField(source='author.username')
-    last_name = serializers.ReadOnlyField(source='author.last_name')
-    email = serializers.ReadOnlyField(source='author.email')
-    is_subscribed = serializers.SerializerMethodField()
-    recipes_count = serializers.ReadOnlyField(source='author.recipes.count')
+    is_subscribed = serializers.BooleanField(default=True)
+    recipes_count = serializers.IntegerField(source="recipes.count", read_only=True)
     recipes = serializers.SerializerMethodField()
-    id = serializers.ReadOnlyField(source='author.id')
 
     class Meta:
-        model = Follow
+        model = User
         fields = (
             'first_name', 'username', 'last_name', 'email',
             'is_subscribed', 'recipes_count', 'recipes', 'id',)
 
     def get_recipes(self, obj):
-        queryset = Recipe.objects.filter(author=obj.author)
-        request = self.context.get('request')
-        limit = request.GET.get('recipes_limit')
-        if limit:
-            queryset = queryset[:int(limit)]
-        return RecipeSubscribeSerializer(queryset, many=True).data
-
-    def get_is_subscribed(self, obj):
-        return obj.author.following.filter(user=obj.user).exists()
-        # return Follow.objects.filter(author=obj.author, user=obj.user).exists()
+        recipes = obj.recipes.all()
+        serializer = RecipeSubscribeSerializer(recipes, many=True,
+                                               context=self.context)
+        return serializer.data
 
     def validate(self, request, id=None):
         author = get_object_or_404(User, id=id)

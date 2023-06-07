@@ -53,6 +53,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def perform_update(self, serializer):
+        serializer.save(author=self.request.user)
+
     def destroy(self, request, *args, **kwargs):
         self.perform_destroy(self.get_object())
         return Response({"Вы удалили рецепт"},
@@ -68,7 +71,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return (IsAuthorOrReadOnly(),)
         return super().get_permissions()
 
-    def post_delete(self, model, request, serializer, pk,):
+    def post_delete(self, model, request, pk, serializer,):
         if self.request.method == 'POST':
             recipe = get_object_or_404(Recipe, pk=pk,)
             if model.objects.filter(user=request.user,
@@ -121,13 +124,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
     @action(detail=True, methods=['POST', 'DELETE'])
-    def shopping_cart(self, pk, request,):
+    def shopping_cart(self, request, pk,):
         serializer = RecipeSubscribeSerializer
         model = ShoppingCart
-        return self.post_delete(model, request, serializer, pk,)
+        return self.post_delete(model, request, pk, serializer,)
 
     @action(detail=True, methods=['POST', 'DELETE'])
-    def favorite(self, pk, request,):
+    def favorite(self, request, pk,):
         serializer = RecipeSubscribeSerializer
         model = Favorite
-        return self.post_delete(model, request, serializer, pk,)
+        return self.post_delete(model, request, pk, serializer,)
