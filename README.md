@@ -95,3 +95,4 @@ Cтудент 50 когорты Клёнов Максим
 - Docker Hub
 - Github Actions
 - Yandex cloud
+
