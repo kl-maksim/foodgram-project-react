@@ -74,11 +74,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def post_delete(self, model, request, pk, serializer,):
         if self.request.method == 'POST':
             recipe = get_object_or_404(Recipe, pk=pk,)
-            if model.objects.filter(user=request.user,
-                                    recipe=recipe).exists():
-                return Response(
-                    {"Рецепт уже находится в избранном"},
-                    status=status.HTTP_400_BAD_REQUEST)
             model.objects.get_or_create(recipe=recipe, user=request.user,)
             return Response(serializer(recipe).data,
                             status=status.HTTP_201_CREATED)
@@ -92,7 +87,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response({"Рецепт был удален"},
                                 status=status.HTTP_204_NO_CONTENT)
             return Response(
-                {"Рецепта нет в избранном/списке покупок"},
+                {"Рецепта нет в избранном списке покупок"},
                 status=status.HTTP_400_BAD_REQUEST)
         return 'Метод запроса не соответсвует ["POST", "DELETE"]'
 
