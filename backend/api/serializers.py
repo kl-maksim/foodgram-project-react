@@ -3,7 +3,6 @@ from drf_extra_fields.fields import Base64ImageField
 from foodgram import settings
 from rest_framework import serializers, status
 from rest_framework.fields import SerializerMethodField
-from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -186,29 +185,20 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                                                context=self.context)
         return serializer.data
 
-    def validate(self, request, id=None):
-        author = get_object_or_404(User, id=id)
-        user = request.user
-        sub = Follow.objects.filter(user=user, author=author,)
-        if self.request.method == 'POST':
-            if user == author:
-                return Response({'Вы не можете подписаться на самого себя'},
-                                status=status.HTTP_400_BAD_REQUEST,)
+    def validate(self, data):
+        method = self.context.get("request").method
+        author = self.instance
+        user = self.context.get("request").user
+        sub = Follow.objects.filter(user=user, author=author)
+        if method == "POST":
             if sub.exists():
                 return Response({'Вы уже подписаны'},
                                 status=status.HTTP_400_BAD_REQUEST,)
-            serializer = SubscriptionSerializer(
-                Follow.objects.create(user=user, author=author,),
-                context={'request': request}).data
-            return Response(serializer, status=status.HTTP_201_CREATED,)
-        if sub.exists():
-            obj = get_object_or_404(Follow, user=user,
-                                    author=author,)
-            obj.delete()
-            return Response({'Вы отписались от рассылки'},
-                            status=status.HTTP_204_NO_CONTENT)
-        if user == author:
-            return Response({'Вы не можете отписаться от себя'},
-                            status=status.HTTP_204_NO_CONTENT)
-        return Response({'Вы не подписаны'},
-                        status=status.HTTP_400_BAD_REQUEST)
+            elif user == author:
+                return Response({'Вы не можете подписаться на самого себя'},
+                                status=status.HTTP_400_BAD_REQUEST,)
+        if method == "DELETE":
+            if not sub.exists():
+                return Response({'Вы не подписаны'},
+                                status=status.HTTP_400_BAD_REQUEST)
+        return data
