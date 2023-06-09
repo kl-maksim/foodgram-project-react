@@ -52,7 +52,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Recipe.objects.all()
 
     def perform_create(self, serializer):
-        serializer = RecipeSerializer
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):

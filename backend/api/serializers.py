@@ -110,7 +110,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         if len(ingredients_list) != len(set(ingredients_list)):
             raise serializers.ValidationError(
                 'Ингредиент указан несколько раз')
-        name = self.data.get('name')
+        name = data.get('name')
         if self.context.get('request').method == 'POST':
             user = self.context.get('request').user
             if Recipe.objects.filter(author=user, name=name).exists():
