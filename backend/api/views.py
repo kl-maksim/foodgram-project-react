@@ -39,6 +39,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = CustomPagination
+    serializer_class = RecipeSerializer
 
     def get_queryset(self):
         is_favorited = self.request.query_params.get('is_favorited')
@@ -51,6 +52,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Recipe.objects.all()
 
     def perform_create(self, serializer):
+        serializer = RecipeSerializer
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
